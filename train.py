@@ -196,7 +196,7 @@ if __name__ == '__main__':
 	#en2idx, idx2en = load_en_vocab()
 	
 	# Construct graph
-	g = Graph("train"); print("Graph loaded")
+	g = Graph("train"); print("Graph loaded Suc")
 	
 	# Start session
 	sv = tf.train.Supervisor(graph=g.graph, 
