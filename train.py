@@ -16,7 +16,7 @@ from tqdm import tqdm
 import numpy as np
 
 def load_vocab():
-	characters = "PE ًٌٍَُِْاإأآبتثجحخدذرزسشصضطظعغفقكلمنهويىؤءةئ." # Arabic character set
+	characters = "PSE ًٌٍَُِْاإأآبتثجحخدذرزسشصضطظعغفقكلمنهويىؤءةئ." # Arabic character set
 	char2idx = {char: idx for idx, char in enumerate(characters)}
 	idx2char = {idx: char for idx, char in enumerate(characters)}
 	return char2idx, idx2char
@@ -41,6 +41,7 @@ def get_data():
 	print(dataset.output_types)  # ==> "{'a': tf.float32, 'b': tf.int32}"
 	print(dataset.output_shapes)  # ==> "{'a': (), 'b': (100,)}"
 	dataset = dataset.batch(32)
+	dataset = dataset.repeat()
 	print(dataset.output_types)  # ==> "{'a': tf.float32, 'b': tf.int32}"
 	print(dataset.output_shapes)  # ==> "{'a': (), 'b': (100,)}"
 	iterator = dataset.make_one_shot_iterator()
@@ -61,7 +62,7 @@ class Graph():
 				self.y = tf.placeholder(tf.int32, shape=(None, hp.maxlen))
 
 			# define decoder inputs
-			self.decoder_inputs = tf.concat((tf.ones_like(self.y[:, :1])*2, self.y[:, :-1]), -1) # 2:<S>
+			self.decoder_inputs = tf.concat((tf.ones_like(self.y[:, :1])*1, self.y[:, :-1]), -1) # 2:<S>
 
 			# Load vocabulary	 
 			char2idx, idx2char = load_vocab()
