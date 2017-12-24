@@ -74,7 +74,7 @@ class Graph():
 									  vocab_size=len(char2idx), 
 									  num_units=hp.hidden_units, 
 									  scale=True,
-									  scope="enc_embed")
+									  scope="embed")
 				print("After embedding.shape->",self.enc.get_shape())
 				
 				## Positional Encoding
@@ -119,8 +119,9 @@ class Graph():
 				self.dec = embedding(self.decoder_inputs, 
 									  vocab_size=len(char2idx), 
 									  num_units=hp.hidden_units,
-									  scale=True, 
-									  scope="dec_embed")
+									  scale=True,
+									  #reuse=True, 
+									  scope="embed")
 				
 				## Positional Encoding
 				if hp.sinusoid:
