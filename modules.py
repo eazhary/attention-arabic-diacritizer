@@ -128,8 +128,8 @@ def embeddings(inputs,
               reuse=None):
     with tf.variable_scope(scope, reuse=reuse):
         if zero_pad:
-            lookup_table = tf.concat((tf.zeros(shape=[1, num_units]),
-                                      lookup_table[1:, :]), 0)
+            lookup = tf.concat((tf.zeros(shape=[1, num_units]),
+                                      lookup[1:, :]), 0)
         outputs = tf.nn.embedding_lookup(lookup, inputs)
         
         if scale:
