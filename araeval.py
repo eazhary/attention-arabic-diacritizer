@@ -45,7 +45,7 @@ def eval():
 			for j in range(hp.maxlen):
 				_preds = sess.run(g.preds, {g.x: x, g.y: preds})
 				preds[:, j] = _preds[:, j]
-			got = " ".join(idx2char[idx] for idx in preds[0]).split("E")[0].strip()
+			got = "".join(idx2char[idx] for idx in preds[0]).split("E")[0].strip()
 			print("Source: ",inp)
 			print("got : ", got)
 										  

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-#/usr/bin/python2
 '''
 June 2017 by kyubyong park. 
 kbpark.linguist@gmail.com.
@@ -9,14 +8,12 @@ from __future__ import print_function
 import tensorflow as tf
 
 from hyperparams import Hyperparams as hp
-#from data_load import get_batch_data, load_vocab
 from modules import *
 import os, codecs
-#from tqdm import tqdm
 import numpy as np
 
 def load_vocab():
-	characters = "PSE ًٌٍَُِْاإأآبتثجحخدذرزسشصضطظعغفقكلمنهويىؤءةئ." # Arabic character set
+	characters = "PSEاإأآبتثجحخدذرزسشصضطظعغفقكلمنهويىؤءةئ ًٌٍَُِّْ،." # Arabic character set
 	char2idx = {char: idx for idx, char in enumerate(characters)}
 	idx2char = {idx: char for idx, char in enumerate(characters)}
 	return char2idx, idx2char
@@ -30,20 +27,13 @@ def get_data():
 		dest = [char2idx[c] for c in items[0]+'E']
 		source += [0]*(hp.maxlen-len(source))
 		dest += [0]*(hp.maxlen-len(dest))
-		#source = source[:180]
-		#dest = dest[:180]
 		return np.array(source, dtype=np.int32),np.array(dest, dtype=np.int32)
 	filenames = tf.gfile.Glob("data/*.txt")
 	dataset = tf.data.TextLineDataset(filenames)
-	#dataset = dataset.shuffle(buffer_size=10000)
 	dataset = dataset.map(lambda text: tuple(tf.py_func(mypyfunc, [text], [tf.int32, tf.int32])))
 	dataset = dataset.filter(lambda x,y: tf.less_equal(tf.size(y),hp.maxlen))
-	print(dataset.output_types)  # ==> "{'a': tf.float32, 'b': tf.int32}"
-	print(dataset.output_shapes)  # ==> "{'a': (), 'b': (100,)}"
 	dataset = dataset.batch(hp.batch_size)
 	dataset = dataset.repeat()
-	print(dataset.output_types)  # ==> "{'a': tf.float32, 'b': tf.int32}"
-	print(dataset.output_shapes)  # ==> "{'a': (), 'b': (100,)}"
 	iterator = dataset.make_one_shot_iterator()
 	next_element = iterator.get_next()
 	return(next_element)
@@ -56,13 +46,12 @@ class Graph():
 				self.x, self.y = get_data() # (N, T)
 				self.x = tf.reshape(self.x,shape=[-1,hp.maxlen])
 				self.y = tf.reshape(self.y,shape=[-1,hp.maxlen])
-				self.num_batch=6000
 			else: # inference
 				self.x = tf.placeholder(tf.int32, shape=(None, hp.maxlen))
 				self.y = tf.placeholder(tf.int32, shape=(None, hp.maxlen))
 
 			# define decoder inputs
-			self.decoder_inputs = tf.concat((tf.ones_like(self.y[:, :1])*1, self.y[:, :-1]), -1) # 2:<S>
+			self.decoder_inputs = tf.concat((tf.ones_like(self.y[:, :1])*1, self.y[:, :-1]), -1) # S+output (shifted)
 			char2idx, idx2char = load_vocab()
 			self.lookup_table = tf.get_variable('lookup_table',
                                        dtype=tf.float32,
@@ -71,7 +60,6 @@ class Graph():
 
 			# Load vocabulary	 
 
-			print("X.shape->",self.x.get_shape())
 			# Encoder
 			with tf.variable_scope("encoder"):
 				## Embedding
@@ -81,7 +69,6 @@ class Graph():
 									  scale=True,
 									  lookup = self.lookup_table,
 									  scope="embed")
-				print("After embedding.shape->",self.enc.get_shape())
 				
 				## Positional Encoding
 				if hp.sinusoid:
@@ -103,7 +90,6 @@ class Graph():
 				self.enc = tf.layers.dropout(self.enc, 
 											rate=hp.dropout_rate, 
 											training=tf.convert_to_tensor(is_training))
-				print(self.enc.get_shape())
 				## Blocks
 				for i in range(hp.num_blocks):
 					with tf.variable_scope("num_blocks_{}".format(i)):
@@ -179,7 +165,7 @@ class Graph():
 				
 			# Final linear projection
 			self.logits = tf.layers.dense(self.dec, len(char2idx))
-			self.preds = tf.to_int32(tf.arg_max(self.logits, dimension=-1))
+			self.preds = tf.to_int32(tf.argmax(self.logits, dimension=-1))
 			self.istarget = tf.to_float(tf.not_equal(self.y, 0))
 			self.acc = tf.reduce_sum(tf.to_float(tf.equal(self.preds, self.y))*self.istarget)/ (tf.reduce_sum(self.istarget))
 			tf.summary.scalar('acc', self.acc)
