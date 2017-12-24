@@ -12,7 +12,7 @@ from hyperparams import Hyperparams as hp
 from data_load import get_batch_data, load_vocab
 from modules import *
 import os, codecs
-from tqdm import tqdm
+#from tqdm import tqdm
 import numpy as np
 
 def load_vocab():
