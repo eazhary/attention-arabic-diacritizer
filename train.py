@@ -40,7 +40,7 @@ def get_data():
 	dataset = dataset.filter(lambda x,y: tf.less_equal(tf.size(y),hp.maxlen))
 	print(dataset.output_types)  # ==> "{'a': tf.float32, 'b': tf.int32}"
 	print(dataset.output_shapes)  # ==> "{'a': (), 'b': (100,)}"
-	dataset = dataset.batch(32)
+	dataset = dataset.batch(hp.batch_size)
 	dataset = dataset.repeat()
 	print(dataset.output_types)  # ==> "{'a': tf.float32, 'b': tf.int32}"
 	print(dataset.output_shapes)  # ==> "{'a': (), 'b': (100,)}"
@@ -204,13 +204,13 @@ if __name__ == '__main__':
 							 logdir=hp.logdir,)
 							 #save_model_secs=0)
 	with sv.managed_session() as sess:
-		for epoch in range(1, hp.num_epochs+1): 
-			if sv.should_stop(): break
-			for step in tqdm(range(g.num_batch), total=g.num_batch, ncols=70, leave=False, unit='b'):
-				sess.run(g.train_op)
-				
-			gs = sess.run(g.global_step)   
-			sv.saver.save(sess, hp.logdir + '/model_epoch_%02d_gs_%d' % (epoch, gs))
+		while not sv.should_stop(): 
+#			for step in tqdm(range(g.num_batch), total=g.num_batch, ncols=70, leave=False, unit='b'):
+			gs,acc,mean,ops=sess.run([g.global_step,g.acc,g.mean_loss,g.train_op])
+			message = "Step %-7d : acc=%.05f mean=%.05f" % (gs,acc,mean)
+			print(message)
+			#gs = sess.run(g.global_step)   
+			#sv.saver.save(sess, hp.logdir + '/model_epoch_%02d_gs_%d' % (epoch, gs))
 	
 	print("Done")	 
 	

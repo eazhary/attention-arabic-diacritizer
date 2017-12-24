@@ -23,7 +23,7 @@ class Hyperparams:
 	maxlen = 180 # Maximum number of words in a sentence. alias = T.
 				# Feel free to increase this if you are ambitious.
 	min_cnt = 20 # words whose occurred less than min_cnt are encoded as <UNK>.
-	hidden_units = 512 # alias = C
+	hidden_units = 128 # alias = C
 	num_blocks = 6 # number of encoder/decoder blocks
 	num_epochs = 20
 	num_heads = 8
