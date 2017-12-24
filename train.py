@@ -63,6 +63,10 @@ class Graph():
 
 			# define decoder inputs
 			self.decoder_inputs = tf.concat((tf.ones_like(self.y[:, :1])*1, self.y[:, :-1]), -1) # 2:<S>
+			self.lookup_table = tf.get_variable('lookup_table',
+                                       dtype=tf.float32,
+                                       shape=[vocab_size, num_units],
+                                       initializer=tf.contrib.layers.xavier_initializer())
 
 			# Load vocabulary	 
 			char2idx, idx2char = load_vocab()
@@ -70,10 +74,11 @@ class Graph():
 			# Encoder
 			with tf.variable_scope("encoder"):
 				## Embedding
-				self.enc = embedding(self.x, 
+				self.enc = embeddings(self.x, 
 									  vocab_size=len(char2idx), 
 									  num_units=hp.hidden_units, 
 									  scale=True,
+									  lookup = self.lookup_table,
 									  scope="embed")
 				print("After embedding.shape->",self.enc.get_shape())
 				
@@ -116,10 +121,11 @@ class Graph():
 			# Decoder
 			with tf.variable_scope("decoder"):
 				## Embedding
-				self.dec = embedding(self.decoder_inputs, 
+				self.dec = embeddings(self.decoder_inputs, 
 									  vocab_size=len(char2idx), 
 									  num_units=hp.hidden_units,
 									  scale=True,
+									  lookup = self.lookup_table,
 									  #reuse=True, 
 									  scope="embed")
 				
