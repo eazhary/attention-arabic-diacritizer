@@ -9,7 +9,7 @@ from __future__ import print_function
 import tensorflow as tf
 
 from hyperparams import Hyperparams as hp
-from data_load import get_batch_data, load_vocab
+#from data_load import get_batch_data, load_vocab
 from modules import *
 import os, codecs
 #from tqdm import tqdm
