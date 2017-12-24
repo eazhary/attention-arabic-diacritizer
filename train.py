@@ -63,13 +63,14 @@ class Graph():
 
 			# define decoder inputs
 			self.decoder_inputs = tf.concat((tf.ones_like(self.y[:, :1])*1, self.y[:, :-1]), -1) # 2:<S>
+			char2idx, idx2char = load_vocab()
 			self.lookup_table = tf.get_variable('lookup_table',
                                        dtype=tf.float32,
-                                       shape=[vocab_size, num_units],
+                                       shape=[len(char2idx), hp.hidden_units],
                                        initializer=tf.contrib.layers.xavier_initializer())
 
 			# Load vocabulary	 
-			char2idx, idx2char = load_vocab()
+
 			print("X.shape->",self.x.get_shape())
 			# Encoder
 			with tf.variable_scope("encoder"):
