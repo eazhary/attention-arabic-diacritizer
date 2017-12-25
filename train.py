@@ -172,19 +172,29 @@ class Graph():
 				
 			if is_training:	 
 				# Loss
+				self.global_step = tf.Variable(0, name='global_step', trainable=False)
+				self.learning_rate = _learning_rate_decay(hp.lr,self.global_step)
 				self.y_smoothed = label_smoothing(tf.one_hot(self.y, depth=len(char2idx)))
 				self.loss = tf.nn.softmax_cross_entropy_with_logits(logits=self.logits, labels=self.y_smoothed)
 				self.mean_loss = tf.reduce_sum(self.loss*self.istarget) / (tf.reduce_sum(self.istarget))
 			   
 				# Training Scheme
-				self.global_step = tf.Variable(0, name='global_step', trainable=False)
-				self.optimizer = tf.train.AdamOptimizer(learning_rate=hp.lr, beta1=0.9, beta2=0.98, epsilon=1e-8)
+				self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate, beta1=0.9, beta2=0.98, epsilon=1e-8)
 				self.train_op = self.optimizer.minimize(self.mean_loss, global_step=self.global_step)
 				   
 				# Summary 
 				tf.summary.scalar('mean_loss', self.mean_loss)
+				tf.summary.scalar('learning_rate', self.learning_rate)
 				self.merged = tf.summary.merge_all()
 
+				
+
+def _learning_rate_decay(init_lr, global_step):
+  # Noam scheme from tensor2tensor:
+  warmup_steps = 2000.0
+  step = tf.cast(global_step + 1, dtype=tf.float32)
+  return init_lr * warmup_steps**0.5 * tf.minimum(step * warmup_steps**-1.5, step**-0.5)
+				
 if __name__ == '__main__':				  
 	# Load vocabulary	 
 	#de2idx, idx2de = load_de_vocab()
