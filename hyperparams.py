@@ -16,7 +16,8 @@ class Hyperparams:
 	# Emad Testing	
 	# training
 	batch_size = 32 # alias = N
-	lr = 0.001 # learning rate. In paper, learning rate is adjusted to the global step.
+#	lr = 0.002 # learning rate. In paper, learning rate is adjusted to the global step.
+	warmup_steps = 2000
 	logdir = 'logdir' # log directory
 	
 	# model

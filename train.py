@@ -53,7 +53,7 @@ class Graph():
 			# define decoder inputs
 			self.decoder_inputs = tf.concat((tf.ones_like(self.y[:, :1])*1, self.y[:, :-1]), -1) # S+output (shifted)
 			char2idx, idx2char = load_vocab()
-			self.lookup_table = tf.get_variable('lookup_table',
+			self.lookup_table = tf.get_variable('lookup_table',         # [50,512]
                                        dtype=tf.float32,
                                        shape=[len(char2idx), hp.hidden_units],
                                        initializer=tf.contrib.layers.xavier_initializer())
@@ -164,19 +164,20 @@ class Graph():
 						self.dec = feedforward(self.dec, num_units=[4*hp.hidden_units, hp.hidden_units])
 				
 			# Final linear projection
-			self.logits = tf.layers.dense(self.dec, len(char2idx))
-			self.preds = tf.to_int32(tf.argmax(self.logits, axis=-1))
-			self.istarget = tf.to_float(tf.not_equal(self.y, 0))
+			#self.dec = (batch,180,512)
+			self.logits = tf.layers.dense(self.dec, len(char2idx)) # (batch,180,50)
+			self.preds = tf.to_int32(tf.argmax(self.logits, axis=-1)) # (batch,180)
+			self.istarget = tf.to_float(tf.not_equal(self.y, 0)) # (batch,180) (1,1,1,1,0,0,0,0,0,0,0,0,0,0)
 			self.acc = tf.reduce_sum(tf.to_float(tf.equal(self.preds, self.y))*self.istarget)/ (tf.reduce_sum(self.istarget))
 			tf.summary.scalar('acc', self.acc)
 				
 			if is_training:	 
 				# Loss
 				self.global_step = tf.Variable(0, name='global_step', trainable=False)
-				self.learning_rate = _learning_rate_decay(hp.lr,self.global_step)
-				self.y_smoothed = label_smoothing(tf.one_hot(self.y, depth=len(char2idx)))
-				self.loss = tf.nn.softmax_cross_entropy_with_logits(logits=self.logits, labels=self.y_smoothed)
-				self.mean_loss = tf.reduce_sum(self.loss*self.istarget) / (tf.reduce_sum(self.istarget))
+				self.learning_rate = _learning_rate_decay(self.global_step)
+				self.y_smoothed = label_smoothing(tf.one_hot(self.y, depth=len(char2idx))) # (batch,180,50)
+				self.loss = tf.nn.softmax_cross_entropy_with_logits(logits=self.logits, labels=self.y_smoothed) # (batch,180)
+				self.mean_loss = tf.reduce_sum(self.loss*self.istarget) / (tf.reduce_sum(self.istarget)) # scalar
 			   
 				# Training Scheme
 				self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate, beta1=0.9, beta2=0.98, epsilon=1e-8)
@@ -189,11 +190,10 @@ class Graph():
 
 				
 
-def _learning_rate_decay(init_lr, global_step):
+def _learning_rate_decay(global_step):
   # Noam scheme from tensor2tensor:
-  warmup_steps = 2000.0
   step = tf.cast(global_step + 1, dtype=tf.float32)
-  return init_lr * warmup_steps**0.5 * tf.minimum(step * warmup_steps**-1.5, step**-0.5)
+  return hp.hidden_units**-0.5 * tf.minimum(step * hp.warmup_steps**-1.5, step**-0.5)
 				
 if __name__ == '__main__':				  
 	# Load vocabulary	 
